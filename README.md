@@ -145,7 +145,7 @@ Raspberry_pi_telegram_bot/
 │
 ├── handlers
 ├── utils
-├── bot.py              # Main bot script
+├── main.py              # Main bot script
 ├── config.py           # Sample configuration file
 ├── requirements.txt    # Python dependencies
 ├── README.md           # This README file
