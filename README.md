@@ -56,7 +56,7 @@ A versatile Telegram bot that runs on a Raspberry Pi, allowing you to control yo
 
 5. **Run the Bot**:
     ```bash
-    python bot.py
+    python main.py
     ```
 
 ## Configuration
