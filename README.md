@@ -65,15 +65,10 @@ Edit the `config.py` file to set your bot's configuration. Here's a breakdown of
 
 - **TOKEN**: Your Telegram bot token provided by BotFather.
 - **AUTHORIZED_USERS**: A list of Telegram user IDs allowed to interact with the bot.
-- **LOGGING**: Configure the logging level and output.
 
 ```python
 TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
 AUTHORIZED_USERS = [123456789, 987654321]
-LOGGING = {
-    'level': 'INFO',
-    'file': 'bot.log'
-}
 ```
 
 ## Usage
@@ -83,7 +78,7 @@ Once the bot is up and running, you can start sending commands via Telegram. The
 
 ### Commands
 
-You can add more commands by modifying the bot.py file and defining new functions to handle those commands.
+You can add more commands by modifying the main.py file and defining new functions to handle those commands.
 
 ### Example Commands
 
