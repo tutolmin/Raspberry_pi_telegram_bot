@@ -166,3 +166,24 @@ Developed with ❤️ by [GraveEaterMadison](https://github.com/GraveEaterMadiso
 
 You can copy and paste this content into your `README.md` file under the relevant sections. Let me know if you need further adjustments!
 ```
+
+### Install
+```
+# включить лингеринг
+loginctl list-users 
+sudo loginctl enable-linger andrei
+
+# Скопировать юнит
+mkdir -p ~/.config/systemd/user
+cp rpi-telegram-bot.service ~/.config/systemd/user/
+
+# Перезагрузите конфигурацию
+systemctl --user daemon-reload
+
+# Включите автозапуск
+systemctl --user enable rpi-telegram-bot.service
+
+# Запустите вручную
+systemctl --user start rpi-telegram-bot.service
+```
+
