@@ -1,5 +1,5 @@
 
-API_TOKEN = 'Telegram_bot_api_token'
+API_TOKEN = '8598639540:AAFwqWQrgXJ1jO5mUrLJvkU2HSaScEm7k_0'
 
 
-AUTHORIZED_USERS = [user_1_id, user_2_id]  
+AUTHORIZED_USERS = [54616533]

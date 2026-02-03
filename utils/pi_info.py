@@ -78,8 +78,28 @@ def manage_service(action: str, service: str) -> str:
     except subprocess.CalledProcessError as e:
         return f"Error performing {action} on {service}: {e.output.decode('utf-8')}"
 
+#def get_gpio_status():
+#    return subprocess.check_output("gpio readall", shell=True).decode()
+
 def get_gpio_status():
-    return subprocess.check_output("gpio readall", shell=True).decode()
+    try:
+        # Используем gpioinfo из пакета gpiod
+        result = subprocess.run(
+            ["gpioinfo"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if result.returncode == 0:
+            lines = result.stdout.strip().split('\n')
+            # Ограничиваем вывод, чтобы не перегружать Telegram
+            return '\n'.join(lines[:30]) + ("\n..." if len(lines) > 30 else "")
+        else:
+            return f"gpioinfo error: {result.stderr}"
+    except FileNotFoundError:
+        return "GPIO info not available. Install 'gpiod' package."
+    except Exception as e:
+        return f"Error reading GPIO: {e}"
 
 def get_netinfo():
     return subprocess.check_output("ifconfig", shell=True).decode()
