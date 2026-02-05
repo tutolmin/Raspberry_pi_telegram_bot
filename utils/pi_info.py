@@ -130,7 +130,7 @@ def get_failed_services() -> str:
         )
         lines = result.strip().splitlines()
         if not lines:
-            return "No running services found."
+            return "No failed services found."
 
         output_lines = []
         for idx, line in enumerate(lines, 1):
@@ -145,7 +145,7 @@ def get_failed_services() -> str:
 
         return "\n".join(output_lines)
     except subprocess.CalledProcessError as e:
-        return f"Error retrieving running services: {e.output}"
+        return f"Error retrieving failed services: {e.output}"
 
 
 
