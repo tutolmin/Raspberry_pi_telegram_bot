@@ -9,6 +9,9 @@ def get_cpu_temperature():
 def get_ip_addresses():
     return subprocess.check_output("hostname -I", shell=True).decode().strip()
 
+def get_cameras():
+    return subprocess.check_output("rpicam-hello --list-cameras", shell=True).decode().strip()
+
 def get_ram_usage() -> str:
     try:
         result = subprocess.check_output("free -m", shell=True)
@@ -61,6 +64,17 @@ def get_disk_usage() -> str:
 def get_uptime():
     return subprocess.check_output("uptime -p", shell=True).decode()
 
+def get_loadavg() -> str:
+    try:
+        with open("/proc/loadavg", "r") as f:
+            loadavg_line = f.read().strip()
+        # Первые три значения — это 1, 5 и 15 минут
+        loads = loadavg_line.split()[:3]
+        load_1, load_5, load_15 = loads[0], loads[1], loads[2]
+        return f"Load average: {load_1} (1m) | {load_5} (5m) | {load_15} (15m)"
+    except Exception as e:
+        return f"Error reading loadavg: {e}"
+
 def get_services() -> str:
     try:
         result = subprocess.check_output("systemctl list-units --type=service --state=running", shell=True)
@@ -108,35 +122,57 @@ def ping_host(host):
     return subprocess.check_output(f"ping -c 4 {host}", shell=True).decode()
 
 
+def get_failed_services() -> str:
+    try:
+        result = subprocess.check_output(
+            "systemctl list-units --user --type=service --state=failed --no-legend --no-pager",
+            shell=True, text=True
+        )
+        lines = result.strip().splitlines()
+        if not lines:
+            return "No running services found."
+
+        output_lines = []
+        for idx, line in enumerate(lines, 1):
+            # Разделяем строку, но сохраняем описание как остаток
+            parts = line.split(maxsplit=4)
+            unit = parts[0] if len(parts) > 0 else "N/A"
+            load = parts[1] if len(parts) > 1 else "N/A"
+            active = parts[2] if len(parts) > 2 else "N/A"
+            sub = parts[3] if len(parts) > 3 else "N/A"
+            description = parts[4] if len(parts) > 4 else ""
+            output_lines.append(f"{idx}. {unit} ({active}, {sub}) — {description}")
+
+        return "\n".join(output_lines)
+    except subprocess.CalledProcessError as e:
+        return f"Error retrieving running services: {e.output}"
+
+
 
 def get_running_services() -> str:
     try:
-        result = subprocess.check_output("systemctl list-units --type=service --state=running", shell=True)
-        lines = result.decode('utf-8').splitlines()
-        if len(lines) < 2:
-            return "No running services found or command failed."
+        result = subprocess.check_output(
+            "systemctl list-units --user --type=service --state=running --no-legend --no-pager",
+            shell=True, text=True
+        )
+        lines = result.strip().splitlines()
+        if not lines:
+            return "No running services found."
 
-        # Extract headers and rows
-        headers = lines[0].split()
-        rows = [line.split(None, len(headers)-1) for line in lines[1:] if len(line.split()) >= len(headers)]
-        
-        # Format header
-        output = f"{'No.':<5} {'Unit':<30} {'Load':<10} {'Active':<15} {'Sub':<15} {'Description':<50}\n"
-        output += '-' * 120 + '\n'
-        
-        
-        for idx, row in enumerate(rows, 1):
-            unit = row[0] if len(row) > 0 else "N/A"
-            load = row[1] if len(row) > 1 else "N/A"
-            active = row[2] if len(row) > 2 else "N/A"
-            sub = row[3] if len(row) > 3 else "N/A"
-            description = ' '.join(row[4:]) if len(row) > 4 else "N/A"
-            output += f"{idx:<5} {unit:<30} {load:<10} {active:<15} {sub:<15} {description:<50}\n\n\n"
-        
-        return output
+        output_lines = []
+        for idx, line in enumerate(lines, 1):
+            # Разделяем строку, но сохраняем описание как остаток
+            parts = line.split(maxsplit=4)
+            unit = parts[0] if len(parts) > 0 else "N/A"
+            load = parts[1] if len(parts) > 1 else "N/A"
+            active = parts[2] if len(parts) > 2 else "N/A"
+            sub = parts[3] if len(parts) > 3 else "N/A"
+            description = parts[4] if len(parts) > 4 else ""
+            output_lines.append(f"{idx}. {unit} ({active}, {sub}) — {description}")
+
+        return "\n".join(output_lines)
     except subprocess.CalledProcessError as e:
-        return f"Error retrieving running services: {e.output.decode('utf-8')}"
-
+        return f"Error retrieving running services: {e.output}"
 
 
 def get_all_services() -> str:

@@ -187,3 +187,14 @@ systemctl --user enable rpi-telegram-bot.service
 systemctl --user start rpi-telegram-bot.service
 ```
 
+### Cloudflare speedtest
+```
+curl -fsSL https://raw.githubusercontent.com/kavehtehrani/cloudflare-speed-cli/main/install.sh | sh
+```
+
+### Necessary variables in .env
+```
+GIGACHAT_CREDENTIALS=
+YANDEX_FOLDER_ID=
+YANDEX_SERVICE_ACCOUNT_KEY_PATH=
+```

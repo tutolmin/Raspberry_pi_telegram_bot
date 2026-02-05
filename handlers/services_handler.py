@@ -1,6 +1,6 @@
 from telegram import Update
 from telegram.ext import CallbackContext
-from utils.pi_info import get_running_services, get_all_services
+from utils.pi_info import get_running_services, get_failed_services, get_all_services
 
 async def send_long_message(chat_id, text, bot):
     # Split the text into chunks of 4096 characters
@@ -10,12 +10,14 @@ async def send_long_message(chat_id, text, bot):
 
 async def services_command(update: Update, context: CallbackContext) -> None:
     args = context.args
-    if not args or args[0] not in ["running", "all"]:
-        await update.message.reply_text("Usage: /services <running|all>")
+    if not args or args[0] not in ["running", "all", "failed"]:
+        await update.message.reply_text("Usage: /services <running|all|failed>")
         return
 
     if args[0] == "running":
         services = get_running_services()
+    elif args[0] == "failed":
+        services = get_failed_services()
     else:  # args[0] == "all"
         services = get_all_services()
 
