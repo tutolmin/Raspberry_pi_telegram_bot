@@ -190,6 +190,11 @@ systemctl --user start rpi-telegram-bot.service
 ### Cloudflare speedtest
 ```
 curl -fsSL https://raw.githubusercontent.com/kavehtehrani/cloudflare-speed-cli/main/install.sh | sh
+cp cloudflare-speed-cli-bg ~/.local/bin/
+chmod +x ~/.local/bin/cloudflare-speed-cli-bg
+cp cloudflare-speedtest.* ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now cloudflare-speedtest.timer
 ```
 
 ### Necessary variables in .env

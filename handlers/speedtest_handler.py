@@ -60,11 +60,27 @@ async def speedtest_command_handler(update: Update, context: CallbackContext) ->
 
     arg = context.args[0].lower()
     if arg == "run":
-        cmd = [os.path.expanduser("~/.local/bin/cloudflare-speed-cli"), "--json", "--silent"]
         try:
-            subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            await update.message.reply_text("🚀 Started new speed test in background.")
+            # Перезапускаем сервис через systemctl --user
+            result = subprocess.run(
+                ["systemctl", "--user", "restart", "cloudflare-speedtest.service"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            if result.returncode == 0:
+                await update.message.reply_text("🚀 Speed test started via systemd service.")
+            else:
+                await update.message.reply_text(f"❌ Failed to restart service:\n{result.stderr}")
+        except subprocess.TimeoutExpired:
+            await update.message.reply_text("⚠️ Timeout restarting service")
         except Exception as e:
-            await update.message.reply_text(f"❌ Failed to start speed test: {str(e)}")
+            await update.message.reply_text(f"💥 Error: {str(e)}")        
+#        cmd = [os.path.expanduser("~/.local/bin/cloudflare-speed-cli"), "--json", "--silent"]
+#        try:
+#            subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+#            await update.message.reply_text("🚀 Started new speed test in background.")
+#        except Exception as e:
+#            await update.message.reply_text(f"❌ Failed to start speed test: {str(e)}")
     else:
         await update.message.reply_text("❌ Wrong command. Use `/speedtest` or `/speedtest run`.")

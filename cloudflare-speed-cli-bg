@@ -1,0 +1,5 @@
+#!/bin/bash
+# Запускаем cloudflare-speed-cli в фоне и сразу завершаемся
+/home/andrei/.local/bin/cloudflare-speed-cli --json --skip-diagnostics >/dev/null 2>&1 &
+disown
+exit 0
