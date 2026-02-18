@@ -214,3 +214,45 @@ GIGACHAT_CREDENTIALS=
 YANDEX_FOLDER_ID=
 YANDEX_SERVICE_ACCOUNT_KEY_PATH=
 ```
+
+### IPerf3
+
+   Authentication - RSA Keypair
+       The authentication feature of iperf3 requires an RSA public keypair.  The public key is used to encrypt the authentication to‐
+       ken containing the user credentials, while the private key is used to decrypt the authentication token.  An example of  a  set
+       of UNIX/Linux commands to generate correct keypair follows:
+
+            > openssl genrsa -des3 -out private.pem 2048
+            > openssl rsa -in private.pem -outform PEM -pubout -out public.pem
+            > openssl rsa -in private.pem -out private_not_protected.pem -outform PEM
+
+       After  these  commands,  the  public key will be contained in the file public.pem and the private key will be contained in the
+       file private_not_protected.pem.
+
+   Authentication - Authorized users configuration file
+       A simple plaintext file must be provided to the iperf3 server in order to specify the authorized user credentials.   The  file
+       is a simple list of comma-separated pairs of a username and a corresponding password hash.  The password hash is a SHA256 hash
+       of the string "{$user}$password".  The file can also contain commented lines (starting with the # character).  An  example  of
+       commands to generate the password hash on a UNIX/Linux system is given below:
+
+            > S_USER=mario S_PASSWD=rossi
+            > echo -n "{$S_USER}$S_PASSWD" | sha256sum | awk '{ print $1 }'
+
+       An example of a password file (with an entry corresponding to the above username and password) is given below:
+            > cat credentials.csv
+            # file format: username,sha256
+            mario,bf7a49a846d44b454a5d11e7acfaf13d138bbe0b7483aa3e050879700572709b
+
+
+### Install python3.11
+ ```
+ cd Raspberry_pi_telegram_bot/
+ cd Python-3.11.4/
+ ls
+ make -j 3
+ sudo make altinstall
+ python3.11 --version
+ sudo update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3.11 1
+ python3 --version
+```
+
