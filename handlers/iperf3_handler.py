@@ -4,49 +4,115 @@ import json
 import subprocess
 from telegram import Update
 from telegram.ext import CallbackContext
-from datetime import datetime, timezone
+from datetime import datetime
+from typing import Dict, Any
 
-def format_speed_report(data: dict) -> str:
+def format_speed_report(data: Dict[str, Any]) -> str:
     try:
-        country = data.get("meta", {}).get("country", "??")
-        server = data.get("server", "??")
+        # Получаем информацию о подключении
+        start_data = data.get("start", {})
+        connected = start_data.get("connected", [])
+        remote_host = connected[0].get("remote_host", "??") if connected else "??"
 
-        utc_str = data.get("timestamp_utc")
-        if utc_str:
-            dt_utc = datetime.fromisoformat(utc_str.replace("Z", "+00:00")).replace(tzinfo=timezone.utc)
-            timestamp = dt_utc.astimezone().strftime("%Y-%m-%d %H:%M:%S")
-        else:
-            timestamp = "???"
+        # Получаем временную метку
+        timestamp_data = start_data.get("timestamp", {})
+        timestamp_str = timestamp_data.get("time", "???")
 
-        idle_lat = data.get("idle_latency", {})
-        ping_median = int(idle_lat.get("median_ms", 0))
-        loss_pct = round(idle_lat.get("loss", 0) * 100)
+        # Парсим время из формата "Wed, 18 Feb 2026 13:04:38 GMT"
+        try:
+            if timestamp_str != "???":
+                dt = datetime.strptime(timestamp_str, "%a, %d %b %Y %H:%M:%S %Z")
+                timestamp = dt.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                timestamp = "???"
+        except:
+            timestamp = timestamp_str
 
-        down_mbps = data.get("download", {}).get("mbps", 0)
-        up_mbps = data.get("upload", {}).get("mbps", 0)
+        # Получаем итоговые данные из секции end
+        end_data = data.get("end", {})
+        sum_sent = end_data.get("sum_sent", {})
+        sum_received = end_data.get("sum_received", {})
+        sum_reverse = end_data.get("sum_sent_bidir_reverse", {})
 
-        # Округляем до 3 знаков после запятой, но убираем лишние нули через форматирование
+        # Скорость загрузки (download) - это полученные данные (receiver)
+        down_bps = sum_received.get("bits_per_second", 0)
+        down_mbps = down_bps / 1_000_000
+
+        # Скорость отдачи (upload) - это отправленные данные в обратном направлении
+        up_bps = sum_reverse.get("bits_per_second", 0)
+        up_mbps = up_bps / 1_000_000
+
+        # Если нет обратного направления, используем sum_sent как upload
+        if up_mbps == 0:
+            up_bps = sum_sent.get("bits_per_second", 0)
+            up_mbps = up_bps / 1_000_000
+
+        # Получаем информацию о потерях и задержках из первого потока
+        streams = end_data.get("streams", [])
+        ping_info = {}
+        loss_pct = 0
+
+        if streams and len(streams) > 0:
+            sender_info = streams[0].get("sender", {})
+            if sender_info:
+                ping_info = {
+                    "min_rtt": sender_info.get("min_rtt", 0) / 1000,  # конвертируем в ms
+                    "max_rtt": sender_info.get("max_rtt", 0) / 1000,
+                    "mean_rtt": sender_info.get("mean_rtt", 0) / 1000
+                }
+                # Расчет потерь на основе retransmits
+                total_packets = sender_info.get("bytes", 0) / 1460  # приблизительно
+                retransmits = sender_info.get("retransmits", 0)
+                if total_packets > 0:
+                    loss_pct = (retransmits / total_packets) * 100
+
+        # Функция для форматирования чисел
         def fmt(x):
             return f"{x:.3f}".rstrip('0').rstrip('.')
 
-        return (
-            f"🌐 {country} → {server} | 🕒 {timestamp}\n"
-            f"📶 Idle ping: {ping_median} ms (loss: {loss_pct}%)\n"
-            f"📥 Down: {fmt(down_mbps)} Mbps\n"
-            f"📤 Up: {fmt(up_mbps)} Mbps"
-        )
+        # Формируем сообщение
+        message_parts = [
+            f"🌐 {remote_host} | 🕒 {timestamp}",
+        ]
+
+        if ping_info and ping_info["mean_rtt"] > 0:
+            message_parts.append(
+                f"📶 Ping: min={fmt(ping_info['min_rtt'])} ms, "
+                f"avg={fmt(ping_info['mean_rtt'])} ms, "
+                f"max={fmt(ping_info['max_rtt'])} ms"
+            )
+
+        if loss_pct > 0:
+            message_parts.append(f"⚠️ Packet loss: {loss_pct:.2f}%")
+
+        message_parts.extend([
+            f"📥 Download: {fmt(down_mbps)} Mbps",
+            f"📤 Upload: {fmt(up_mbps)} Mbps"
+        ])
+
+        # Добавляем информацию о ретрансмиссиях если есть
+        total_retransmits = sum_sent.get("retransmits", 0)
+        if total_retransmits > 0:
+            message_parts.append(f"🔄 Retransmits: {total_retransmits}")
+
+        return "\n".join(message_parts)
+
     except Exception as e:
         return f"⚠️ Error formatting report: {e}"
 
 async def iperf3_command_handler(update: Update, context: CallbackContext) -> None:
     if not context.args:
-        # Find the latest report
-        runs_dir = os.path.expanduser("~/.local/share/iperf3-speed-cli/runs/")
-        json_files = glob.glob(os.path.join(runs_dir, "run-*.json"))
+        # Новый путь к файлам с результатами
+        runs_dir = os.path.expanduser("~/.local/share/iperf3/runs/")
+
+        # Ищем все JSON файлы в директории runs
+        json_files = glob.glob(os.path.join(runs_dir, "*.json"))
+
         if not json_files:
             await update.message.reply_text("No previous speed test reports found.")
             return
 
+        # Берем самый последний файл по времени модификации
         latest_file = max(json_files, key=os.path.getmtime)
 
         try:
@@ -75,12 +141,6 @@ async def iperf3_command_handler(update: Update, context: CallbackContext) -> No
         except subprocess.TimeoutExpired:
             await update.message.reply_text("⚠️ Timeout restarting service")
         except Exception as e:
-            await update.message.reply_text(f"💥 Error: {str(e)}")        
-#        cmd = [os.path.expanduser("~/.local/bin/iperf3-speed-cli"), "--json", "--silent"]
-#        try:
-#            subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-#            await update.message.reply_text("🚀 Started new speed test in background.")
-#        except Exception as e:
-#            await update.message.reply_text(f"❌ Failed to start speed test: {str(e)}")
+            await update.message.reply_text(f"💥 Error: {str(e)}")
     else:
         await update.message.reply_text("❌ Wrong command. Use `/iperf3` or `/iperf3 run`.")
