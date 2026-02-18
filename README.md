@@ -197,6 +197,17 @@ systemctl --user daemon-reload
 systemctl --user enable --now cloudflare-speedtest.timer
 ```
 
+### IPerf3 speedtest
+```
+sudo apt -y install iperf3
+mkdir ~/.local/bin/
+cp iperf3-speed-cli-bg ~/.local/bin/
+chmod +x ~/.local/bin/iperf3-speed-cli-bg
+cp iperf3-speedtest.* ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now iperf3-speedtest.timer
+```
+
 ### Necessary variables in .env
 ```
 GIGACHAT_CREDENTIALS=

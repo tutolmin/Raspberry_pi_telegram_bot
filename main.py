@@ -27,6 +27,7 @@ from handlers.cameras_handler import cameras_command
 from handlers.giga_handler import giga_check_command
 from handlers.yandex_ocr_check_handler import yandex_ocr_check_command
 from handlers.speedtest_handler import speedtest_command_handler
+from handlers.iperf3_handler import iperf3_command_handler
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -66,6 +67,7 @@ def main() -> None:
     application.add_handler(CommandHandler("gigachat", lambda update, context: handle_command(update, context, giga_check_command)))
     application.add_handler(CommandHandler("ocr", lambda update, context: handle_command(update, context, yandex_ocr_check_command)))
     application.add_handler(CommandHandler("speedtest", lambda update, context: handle_command(update, context, speedtest_command_handler)))
+    application.add_handler(CommandHandler("iperf3", lambda update, context: handle_command(update, context, iperf3_command_handler)))
 
     application.run_polling()
 

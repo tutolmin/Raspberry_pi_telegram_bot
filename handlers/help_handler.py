@@ -13,6 +13,7 @@ async def help_command(update: Update, context: CallbackContext) -> None:
         "/gpio - Get GPIO status\n\n"
         "/help - Show this help message\n\n"
         "/info - Get system information\n\n"
+        "/iperf3 [run] - Check internet speed with IPerf3\n\n"
         "/ip - Get IP addresses\n\n"
         "/loadavg - Get load averages\n\n"
         "/netinfo - Get network interfaces\n\n"

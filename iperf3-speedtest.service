@@ -1,0 +1,14 @@
+# ~/.config/systemd/user/iperf3-speedtest.service
+[Unit]
+Description=IPerf3 Speed Test (background)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/andrei/.local/bin/iperf3-speed-cli-bg
+RemainAfterExit=yes
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/andrei/.local/bin
+
+[Install]
+WantedBy=default.target
