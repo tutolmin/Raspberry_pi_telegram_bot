@@ -208,6 +208,11 @@ systemctl --user daemon-reload
 systemctl --user enable --now iperf3-speedtest.timer
 ```
 
+### Add password to env 
+```
+/home/andrei/.config/iperf3-speed-cli/env
+```
+
 ### Necessary variables in .env
 ```
 GIGACHAT_CREDENTIALS=

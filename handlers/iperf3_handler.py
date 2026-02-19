@@ -4,7 +4,7 @@ import json
 import subprocess
 from telegram import Update
 from telegram.ext import CallbackContext
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any
 
 def format_speed_report(data: Dict[str, Any]) -> str:
@@ -18,11 +18,16 @@ def format_speed_report(data: Dict[str, Any]) -> str:
         timestamp_data = start_data.get("timestamp", {})
         timestamp_str = timestamp_data.get("time", "???")
 
-        # Парсим время из формата "Wed, 18 Feb 2026 13:04:38 GMT"
+        # Парсим время и конвертируем в локальную зону сервера
         try:
             if timestamp_str != "???":
+                # Парсим время (предполагаем что оно в UTC, т.к. в строке указан GMT)
                 dt = datetime.strptime(timestamp_str, "%a, %d %b %Y %H:%M:%S %Z")
-                timestamp = dt.strftime("%Y-%m-%d %H:%M:%S")
+                # Добавляем UTC timezone
+                dt_utc = dt.replace(tzinfo=timezone.utc)
+                # Конвертируем в локальный часовой пояс сервера
+                dt_local = dt_utc.astimezone()
+                timestamp = dt_local.strftime("%Y-%m-%d %H:%M:%S")
             else:
                 timestamp = "???"
         except:

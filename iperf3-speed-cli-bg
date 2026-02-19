@@ -1,17 +1,26 @@
 #!/bin/bash
 
+# Читаем пароль из файла
+PASSWORD_FILE="/home/andrei/.config/iperf3-speed-cli/env"
+if [ -f "$PASSWORD_FILE" ]; then
+    IPERF3_PASSWORD=$(cat "$PASSWORD_FILE")
+    export IPERF3_PASSWORD
+else
+    echo "Файл с паролем не найден: $PASSWORD_FILE" >&2
+    exit 1
+fi
+
 # Создаем директорию для логов, если её нет
 LOG_DIR="/home/andrei/.local/share/iperf3/runs"
 mkdir -p "$LOG_DIR"
 
 # Генерируем имя файла с датой и временем
-# Формат: YYYY-MM-DD_HH-MM-SS_iperf3.json
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 OUTPUT_FILE="${LOG_DIR}/${TIMESTAMP}_iperf3.json"
 
-# Запускаем iperf3 и сохраняем результат в файл
-IPERF3_PASSWORD=UVq9ngcAdD6kT5 /usr/bin/iperf3 -c iperf3.tutolmin.ru \
-    --rsa-public-key-path ~/Raspberry_pi_telegram_bot/iperf3_pub.pem \
+# Запускаем iperf3
+/usr/bin/iperf3 -c iperf3.tutolmin.ru \
+    --rsa-public-key-path "/home/andrei/Raspberry_pi_telegram_bot/iperf3_pub.pem" \
     --username andrei -J --bidir > "$OUTPUT_FILE" 2>&1 &
 
 disown

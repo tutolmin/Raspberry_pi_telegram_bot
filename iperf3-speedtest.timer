@@ -4,7 +4,7 @@ Description=Run IPerf3 speed test 15s after boot
 After=network-online.target
 
 [Timer]
-OnBootSec=15s
+OnBootSec=60s
 AccuracySec=1s
 
 [Install]
