@@ -1,12 +1,13 @@
 [Unit]
 Description=Raspberry Pi Telegram Bot
 After=network.target
+Wants=xray.service
 
 [Service]
 Type=simple
 WorkingDirectory=/home/andrei/Raspberry_pi_telegram_bot
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/home/andrei/.venv/bin/python main.py
+ExecStart=/usr/bin/proxychains /home/andrei/.venv/bin/python main.py
 Restart=always
 RestartSec=10
 StandardOutput=journal
