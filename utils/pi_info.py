@@ -1,17 +1,80 @@
 import subprocess
+import logging
+import os
+
+# Настройка логирования (если еще не настроено)
+logger = logging.getLogger(__name__)
 
 def get_system_info():
-    return subprocess.check_output("uname -a", shell=True).decode()
+    try:
+        return subprocess.check_output("uname -a", shell=True).decode().strip()
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error getting system info: {e}")
+        return "Error: Unable to get system info"
+    except Exception as e:
+        logger.error(f"Unexpected error getting system info: {e}")
+        return "Error: Unexpected error"
 
 def get_cpu_temperature():
-    return subprocess.check_output("vcgencmd measure_temp", shell=True).decode().strip()
+    try:
+        return subprocess.check_output("vcgencmd measure_temp", shell=True).decode().strip()
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error getting CPU temperature: {e}")
+        return "Error: Unable to get CPU temperature"
+    except Exception as e:
+        logger.error(f"Unexpected error getting CPU temperature: {e}")
+        return "Error: Unexpected error"
 
 def get_ip_addresses():
-    return subprocess.check_output("hostname -I", shell=True).decode().strip()
+    try:
+        return subprocess.check_output("hostname -I", shell=True).decode().strip()
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error getting IP addresses: {e}")
+        return "Error: Unable to get IP addresses"
+    except Exception as e:
+        logger.error(f"Unexpected error getting IP addresses: {e}")
+        return "Error: Unexpected error"
 
 def get_cameras():
-    return subprocess.check_output("rpicam-hello --list-cameras", shell=True).decode().strip()
+    # Копируем текущее окружение
+    env = os.environ.copy()
 
+    # Удаляем LD_PRELOAD, чтобы команда работала чисто
+    env.pop('LD_PRELOAD', None)
+    try:
+        result = subprocess.check_output(
+            "/usr/bin/rpicam-hello --list-cameras",
+            shell=True,
+            stderr=subprocess.STDOUT,  # Capture stderr as well
+            env=env
+        ).decode().strip()
+        return result if result else "No cameras found"
+    except subprocess.CalledProcessError as e:
+        # e.output содержит stdout/stderr команды
+        error_msg = f"Error running rpicam-hello (exit code {e.returncode})"
+        if e.output:
+            error_msg += f": {e.output.decode().strip()}"
+        logger.error(error_msg)
+        return f"Error: Failed to list cameras. Exit code: {e.returncode}"
+    except FileNotFoundError:
+        logger.error("rpicam-hello command not found")
+        return "Error: rpicam-hello not installed"
+    except Exception as e:
+        logger.error(f"Unexpected error getting cameras: {e}")
+        return "Error: Unexpected error"
+#
+#def get_system_info():
+#    return subprocess.check_output("uname -a", shell=True).decode()
+#
+#def get_cpu_temperature():
+#    return subprocess.check_output("vcgencmd measure_temp", shell=True).decode().strip()
+#
+#def get_ip_addresses():
+#    return subprocess.check_output("hostname -I", shell=True).decode().strip()
+#
+#def get_cameras():
+#    return subprocess.check_output("/usr/bin/rpicam-hello --list-cameras", shell=True).decode().strip()
+#
 def get_ram_usage() -> str:
     try:
         result = subprocess.check_output("free -m", shell=True)
