@@ -21,7 +21,7 @@ OUTPUT_FILE="${LOG_DIR}/${TIMESTAMP}_iperf3.json"
 # Запускаем iperf3
 /usr/bin/iperf3 -c iperf3.tutolmin.ru \
     --rsa-public-key-path "/home/andrei/Raspberry_pi_telegram_bot/iperf3_pub.pem" \
-    --username andrei -J --bidir > "$OUTPUT_FILE" 2>&1 &
+    --username andrei -J --bidir --use-pkcs1-padding > "$OUTPUT_FILE" 2>&1 &
 
 disown
 exit 0
